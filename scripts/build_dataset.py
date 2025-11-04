@@ -78,21 +78,17 @@ def achar_csv_bruto(par: str, timeframe_s: int) -> Optional[Path]:
     candidatos = glob(padrao)
     if not candidatos:
         return None
-    # pega o mais novo por mtime
     candidatos.sort(key=lambda p: Path(p).stat().st_mtime, reverse=True)
     return Path(candidatos[0])
 
 def carregar_ohlcv(caminho: Path) -> pd.DataFrame:
     """Lê CSV padrão do extrator e garante tipos."""
     df = pd.read_csv(caminho, parse_dates=["from"])
-    # garante ordenação temporal
     df = df.drop_duplicates(subset=["from"]).sort_values("from").reset_index(drop=True)
-    # garante colunas esperadas
     colunas = ["from", "abertura", "maxima", "minima", "fechamento", "volume"]
     faltando = [c for c in colunas if c not in df.columns]
     if faltando:
         raise ValueError(f"CSV sem colunas esperadas: faltam {faltando}")
-    # tipos
     for c in ["abertura", "maxima", "minima", "fechamento", "volume"]:
         df[c] = pd.to_numeric(df[c], errors="coerce")
     return df
@@ -227,10 +223,10 @@ def transformar(par: str, timeframe_s: int) -> Tuple[pd.DataFrame, Path]:
     # Labels
     Y = construir_labels(base)
 
-    # Junta tudo com índices alinhados e remove linhas inválidas (NaN iniciais e a última do label)
-    df_all = pd.concat([base[["from", "abertura", "maxima", "minima", "fechamento", "volume"]], X, Y], axis=1)
-    # drop primeiros NaN (por janelas) e a última (por y_* shift -1)
-    df_all = df_all.dropna().copy()
+    # Junta tudo e remove linhas inválidas (NaNs iniciais e a última sem rótulo)
+    cols_base = ["from", "abertura", "maxima", "minima", "fechamento", "volume"]
+    df_all = pd.concat([base[cols_base], X, Y], axis=1)
+    df_all = df_all.dropna().iloc[:-1].copy()
 
     # Saída com metadado de linhas
     nlin = len(df_all)
@@ -263,7 +259,6 @@ if __name__ == "__main__":
 
     try:
         df_out, path_out = transformar(par, timeframe_s)
-        # mostra o final para inspeção rápida
         print(df_out.tail(), flush=True)
         sys.exit(0)
     except Exception as e:
