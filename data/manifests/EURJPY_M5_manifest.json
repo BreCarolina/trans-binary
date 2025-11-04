@@ -1,0 +1,167 @@
+{
+  "created_at": "2025-11-04T14:02:37.575669+00:00",
+  "par": "EURJPY",
+  "timeframe_s": 300,
+  "tfmin": "M5",
+  "source_csv": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/EURJPY_M5_features_36287x.csv",
+  "n_rows_source": 36287,
+  "columns": {
+    "base": [
+      "from",
+      "abertura",
+      "maxima",
+      "minima",
+      "fechamento",
+      "volume"
+    ],
+    "features": [
+      "ret_log_1",
+      "ret_pct_1",
+      "ret_pct_5",
+      "ret_pct_12",
+      "body",
+      "body_abs",
+      "upper_wick",
+      "lower_wick",
+      "range",
+      "range_pct_close",
+      "ema_7",
+      "ema_21",
+      "ema_50",
+      "ema_cross_7_21",
+      "ema_cross_21_50",
+      "rsi_14",
+      "atr_14",
+      "roll_mean_5",
+      "roll_std_5",
+      "zscore_5",
+      "roll_mean_12",
+      "roll_std_12",
+      "zscore_12",
+      "roll_mean_48",
+      "roll_std_48",
+      "zscore_48",
+      "hour_sin",
+      "hour_cos",
+      "dow_sin",
+      "dow_cos"
+    ],
+    "labels": [
+      "y_up",
+      "y_down",
+      "y_noop"
+    ]
+  },
+  "split": {
+    "ratios": {
+      "train": 0.7,
+      "val": 0.15,
+      "test": 0.15
+    },
+    "index_ranges": {
+      "train": [
+        0,
+        25400
+      ],
+      "val": [
+        25400,
+        30843
+      ],
+      "test": [
+        30843,
+        36287
+      ]
+    },
+    "date_ranges_utc": {
+      "train": [
+        "2025-01-07T10:55:00+00:00",
+        "2025-08-05T14:55:00+00:00"
+      ],
+      "val": [
+        "2025-08-05T15:00:00+00:00",
+        "2025-09-18T17:50:00+00:00"
+      ],
+      "test": [
+        "2025-09-18T17:55:00+00:00",
+        "2025-11-03T20:55:00+00:00"
+      ]
+    }
+  },
+  "scaler": {
+    "type": "standard",
+    "mean": {
+      "ret_log_1": 1.4049476322128285e-06,
+      "ret_pct_1": 1.517096656885397e-06,
+      "ret_pct_5": 7.480029589512514e-06,
+      "ret_pct_12": 1.7981221683696654e-05,
+      "body": 0.00013746062992134697,
+      "body_abs": 0.04270805118110225,
+      "upper_wick": 0.021961535433070868,
+      "lower_wick": 0.02196775590551176,
+      "range": 0.08663734251968497,
+      "range_pct_close": 0.000532121296740713,
+      "ema_7": 163.75410723938896,
+      "ema_21": 163.75243535279395,
+      "ema_50": 163.7489083645399,
+      "ema_cross_7_21": 0.027244094488188975,
+      "ema_cross_21_50": 0.04267716535433071,
+      "rsi_14": 50.451010384092704,
+      "atr_14": 0.08860292141523082,
+      "roll_mean_5": 163.7543429094488,
+      "roll_std_5": 0.05188268026941739,
+      "zscore_5": 0.016522356800270213,
+      "roll_mean_12": 163.7535230101706,
+      "roll_std_12": 0.07954509233619221,
+      "zscore_12": 0.025681671577664517,
+      "roll_mean_48": 163.74916025262468,
+      "roll_std_48": 0.16561316796338968,
+      "zscore_48": 0.047277558629689284,
+      "hour_sin": -0.20510965897997946,
+      "hour_cos": -0.48213191133235045,
+      "dow_sin": 0.3518500448591679,
+      "dow_cos": -0.07754819047666708
+    },
+    "std": {
+      "ret_log_1": 0.00047365316817201693,
+      "ret_pct_1": 0.0004735205279646364,
+      "ret_pct_5": 0.000998802240173498,
+      "ret_pct_12": 0.0015002086150185726,
+      "body": 0.06621648132273518,
+      "body_abs": 0.05060229091923399,
+      "upper_wick": 0.02509104836204614,
+      "lower_wick": 0.024562900076401183,
+      "range": 0.06677652742963254,
+      "range_pct_close": 0.00041589023698677583,
+      "ema_7": 4.426284744364304,
+      "ema_21": 4.422990625715273,
+      "ema_50": 4.416138462959272,
+      "ema_cross_7_21": 0.9996484890805859,
+      "ema_cross_21_50": 0.999108582425846,
+      "rsi_14": 12.475012403185662,
+      "atr_14": 0.04361233429882273,
+      "roll_mean_5": 4.426983544501655,
+      "roll_std_5": 0.05348815420298624,
+      "zscore_5": 1.0256239961373992,
+      "roll_mean_12": 4.425646882027914,
+      "roll_std_12": 0.07027600483473431,
+      "zscore_12": 1.2202682015120834,
+      "roll_mean_48": 4.418851896533788,
+      "roll_std_48": 0.11322972076387208,
+      "zscore_48": 1.4151495134830254,
+      "hour_sin": 0.7110408485667158,
+      "hour_cos": 0.46896516162883517,
+      "dow_sin": 0.514444253613962,
+      "dow_cos": 0.7781832655113894
+    },
+    "epsilon_note": "std zeros substituídos por 1.0 para evitar divisão por zero",
+    "fit_on": "train"
+  },
+  "artifacts": {
+    "X_train": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/EURJPY_M5_X_train.csv",
+    "y_train": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/EURJPY_M5_y_train.csv",
+    "X_val": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/EURJPY_M5_X_val.csv",
+    "y_val": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/EURJPY_M5_y_val.csv",
+    "X_test": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/EURJPY_M5_X_test.csv",
+    "y_test": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/EURJPY_M5_y_test.csv"
+  }
+}
