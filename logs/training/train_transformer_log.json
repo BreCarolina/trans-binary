@@ -1,0 +1,123 @@
+{
+  "tag": "PAIR_TF",
+  "config": {
+    "data": {
+      "tf": "M5",
+      "features_csv_prefix": "EURJPY_M5",
+      "X_train": "data/processed/EURJPY_M5_X_train.csv",
+      "y_train": "data/processed/EURJPY_M5_y_train.csv",
+      "X_val": "data/processed/EURJPY_M5_X_val.csv",
+      "y_val": "data/processed/EURJPY_M5_y_val.csv",
+      "X_test": "data/processed/EURJPY_M5_X_test.csv",
+      "y_test": "data/processed/EURJPY_M5_y_test.csv",
+      "manifest": "data/manifests/EURJPY_M5_manifest.json"
+    },
+    "sequence": {
+      "seq_len": 64,
+      "horizon": 1,
+      "target": "direction",
+      "target_map": {
+        "class3": [
+          "y_up",
+          "y_down",
+          "y_noop"
+        ]
+      }
+    },
+    "model": {
+      "d_model": 128,
+      "nhead": 8,
+      "num_layers": 4,
+      "dim_feedforward": 256,
+      "dropout": 0.1,
+      "activation": "gelu"
+    },
+    "train": {
+      "batch_size": 256,
+      "lr": 0.00015,
+      "weight_decay": 0.0001,
+      "max_epochs": 5,
+      "grad_clip": 1.0,
+      "seed": 42,
+      "device": "auto"
+    },
+    "paths": {
+      "checkpoints_dir": "models/transformer",
+      "logs_dir": "logs/training",
+      "outputs_dir": "reports/summaries"
+    },
+    "runtime": {
+      "num_workers": 2,
+      "pin_memory": false
+    }
+  },
+  "best_val_acc": 0.5112474437627812,
+  "best_checkpoint": "models/transformer/PAIR_TF_transformer_best_20251105-215011.pt",
+  "test_loss": 1.3156351153292178,
+  "test_acc": 0.5037174721189591,
+  "total_time_sec": 1096.1367917060852,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.3374088963838944,
+      "train_acc": 0.47904167990786894,
+      "val_loss": 1.323916222220749,
+      "val_acc": 0.5112474437627812
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.3127682854182945,
+      "train_acc": 0.4874092201761993,
+      "val_loss": 1.3220540291980687,
+      "val_acc": 0.3056330172949995
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.312369072704538,
+      "train_acc": 0.486185664591595,
+      "val_loss": 1.3208737754316484,
+      "val_acc": 0.48336121956861955
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.3083335638121547,
+      "train_acc": 0.49968424380145543,
+      "val_loss": 1.3312014636330323,
+      "val_acc": 0.5106897192786763
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.3021116688833427,
+      "train_acc": 0.4898958001785712,
+      "val_loss": 1.3456598568813667,
+      "val_acc": 0.47927124001851734
+    }
+  ],
+  "shapes": {
+    "X_train": [
+      25336,
+      64,
+      30
+    ],
+    "X_val": [
+      5379,
+      64,
+      30
+    ],
+    "X_test": [
+      5380,
+      64,
+      30
+    ]
+  },
+  "label_map": {
+    "-1": 0,
+    "0": 1,
+    "1": 2
+  },
+  "class_weights": [
+    0.20000000298023224,
+    2.935688018798828,
+    0.20000000298023224
+  ]
+}

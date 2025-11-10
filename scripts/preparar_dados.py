@@ -1,30 +1,11 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-prepare_dataset.py — MVP 2 (Normalização e Splits Temporais)
-
-Lê o CSV transformado mais recente de data/processed/{PAR}_M{TF}_features_*x.csv,
-gera splits temporais (train/val/test), normaliza as FEATURES (fit no TRAIN),
-e salva X_train/X_val/X_test (+ y_*) em data/processed/ e um manifesto JSON em data/manifests/.
-
-Uso (CLI):
-    python scripts/prepare_dataset.py EURJPY m5
-    python scripts/prepare_dataset.py EURUSD 300 0.7 0.15 0.15
-
-Parâmetros:
-    PAR           -> símbolo (ex.: EURUSD, EURJPY)
-    TIMEFRAME     -> m1 | m5 | m15 | 60 | 300 | 900 (ou int)
-    RATIOS op.    -> train, val, test (default 0.70 0.15 0.15) — devem somar 1.0
-
-Saídas:
-    data/processed/{PAR}_{Mtf}_X_train.csv
-    data/processed/{PAR}_{Mtf}_y_train.csv
-    data/processed/{PAR}_{Mtf}_X_val.csv
-    data/processed/{PAR}_{Mtf}_y_val.csv
-    data/processed/{PAR}_{Mtf}_X_test.csv
-    data/processed/{PAR}_{Mtf}_y_test.csv
-    data/manifests/{PAR}_{Mtf}_manifest.json
+preparar_dados.py — Fase 2 (Normalização e Splits Temporais) 
+Gera splits temporais (train/val/test), normaliza as FEATURES (fit no TRAIN),
+permite escolher presets de features (baseline_basic | all | custom) via CLI
+ou via arquivo de configuração YAML (--config). Salva X_*/y_* e manifesto.
 """
-
 from __future__ import annotations
 
 import os
@@ -35,21 +16,17 @@ from pathlib import Path
 from typing import Optional, Tuple, List, Dict
 from datetime import datetime, timezone
 
+import argparse
 import numpy as np
 import pandas as pd
 
-# ---------------------------------------
-# Log sem buffer
-# ---------------------------------------
 try:
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(line_buffering=True)
-    os.environ["PYTHONUNBUFFERED"] = "1"
+    import yaml
 except Exception:
-    pass
+    yaml = None  # leitura de YAML é opcional; só usada se o usuário passar --config
 
 # ---------------------------------------
-# Caminhos
+# Paths
 # ---------------------------------------
 ROOT = Path(__file__).resolve().parents[1]
 RAW_DIR = ROOT / "data" / "raw"
@@ -100,10 +77,8 @@ def separar_colunas(df: pd.DataFrame) -> Tuple[List[str], List[str], List[str]]:
 
 def splits_idx(n: int, ratios: Tuple[float,float,float]) -> Tuple[int,int]:
     r_train, r_val, r_test = ratios
-    # limites (inteiros, respeitando ordem temporal)
     i_train_end = int(n * r_train)
     i_val_end = int(n * (r_train + r_val))
-    # Garantias mínimas
     i_train_end = max(i_train_end, 1)
     i_val_end = max(i_val_end, i_train_end + 1)
     i_val_end = min(i_val_end, n - 1)
@@ -124,34 +99,81 @@ def apply_standard_scaler(X: pd.DataFrame, scaler: Dict[str, Dict[str, float]]) 
     return Xn
 
 # ---------------------------------------
-# Pipeline
+# Feature selection presets
 # ---------------------------------------
-def preparar(par: str, tf_s: int, ratios: Tuple[float,float,float]) -> Dict[str, str]:
+BASELINE_BASIC_KEEP = [
+    "abertura", "maxima", "minima", "fechamento", "volume",
+    "hour_sin", "hour_cos", "dow_sin", "dow_cos"
+]
+
+def select_features_df(df: pd.DataFrame, preset: str, features_list: Optional[List[str]]) -> pd.DataFrame:
+    preset = (preset or "baseline_basic").lower()
+    if preset in ("all", "none"):
+        return df.copy()
+    if preset == "baseline_basic":
+        cols = [c for c in df.columns if c in BASELINE_BASIC_KEEP]
+        if not cols:
+            raise RuntimeError("Nenhuma coluna do baseline_basic encontrada no dataframe.")
+        return df[cols].copy()
+    if preset == "custom":
+        if not features_list:
+            raise RuntimeError("preset=custom mas features_list vazio.")
+        cols = [c for c in features_list if c in df.columns]
+        if not cols:
+            raise RuntimeError("Nenhuma coluna válida encontrada para features_list custom.")
+        return df[cols].copy()
+    raise ValueError(f"Preset desconhecido: {preset}")
+
+# ---------------------------------------
+# Main pipeline
+# ---------------------------------------
+def preparar(par: str, tf_s: int, ratios: Tuple[float,float,float],
+             preset: str = "baseline_basic", features_list: Optional[List[str]] = None,
+             config_from_yaml: Optional[Dict] = None) -> Dict[str, str]:
+    # If config_from_yaml provided and CLI args are defaults, allow YAML to influence preset/list
+    if config_from_yaml:
+        cfg_train = config_from_yaml.get("train", {}) if isinstance(config_from_yaml, dict) else {}
+        if preset in (None, "", "yaml_default"):
+            preset = cfg_train.get("feature_preset", preset)
+        if not features_list:
+            fl = cfg_train.get("features_list", None)
+            if isinstance(fl, list) and fl:
+                features_list = fl
+
     src = achar_features_csv(par, tf_s)
     if not src:
         raise FileNotFoundError(f"Nenhum arquivo de features encontrado para {par} {tfmin_str(tf_s)} em {PROC_DIR}")
-    print(f"[INFO] Usando features: {src}", flush=True)
+    print(f"[INFO] Usando features (bruto): {src}", flush=True)
 
     df = carregar_features(src)
     base_cols, feat_cols, label_cols = separar_colunas(df)
     if not feat_cols:
-        raise RuntimeError("Nenhuma coluna de feature detectada.")
+        raise RuntimeError("Nenhuma coluna de feature detectada no CSV de entrada.")
     if not label_cols:
-        raise RuntimeError("Nenhuma coluna de rótulo (y_*) detectada.")
+        raise RuntimeError("Nenhuma coluna de rótulo (y_*) detectada no CSV de entrada.")
 
-    n = len(df)
+    # Seleciona features conforme preset/custom — aplicamos apenas sobre as feature columns
+    selected_feat_df = select_features_df(df[feat_cols], preset, features_list)
+
+    # Reconstrói dataframe com base + selected_features + labels
+    df_proc = pd.concat([df[base_cols], selected_feat_df, df[label_cols]], axis=1)
+
+    # Índices e splits
+    n = len(df_proc)
+    if n < 3:
+        raise RuntimeError("Número de linhas insuficiente para gerar splits.")
     i_train_end, i_val_end = splits_idx(n, ratios)
     print(f"[INFO] Tamanho total: {n} | train:0:{i_train_end}  val:{i_train_end}:{i_val_end}  test:{i_val_end}:{n}", flush=True)
 
-    # Particiona temporalmente
-    train_df = df.iloc[:i_train_end].copy()
-    val_df   = df.iloc[i_train_end:i_val_end].copy()
-    test_df  = df.iloc[i_val_end:].copy()
+    train_df = df_proc.iloc[:i_train_end].copy()
+    val_df   = df_proc.iloc[i_train_end:i_val_end].copy()
+    test_df  = df_proc.iloc[i_val_end:].copy()
 
+    feat_cols_sel = list(selected_feat_df.columns)
     # Separa X / y
-    X_train, y_train = train_df[feat_cols], train_df[label_cols]
-    X_val,   y_val   = val_df[feat_cols],   val_df[label_cols]
-    X_test,  y_test  = test_df[feat_cols],  test_df[label_cols]
+    X_train, y_train = train_df[feat_cols_sel], train_df[label_cols]
+    X_val,   y_val   = val_df[feat_cols_sel],   val_df[label_cols]
+    X_test,  y_test  = test_df[feat_cols_sel],  test_df[label_cols]
 
     # Normalização: fit no TRAIN, aplica em VAL/TEST
     scaler = fit_standard_scaler(X_train)
@@ -190,8 +212,12 @@ def preparar(par: str, tf_s: int, ratios: Tuple[float,float,float]) -> Dict[str,
         "n_rows_source": int(n),
         "columns": {
             "base": base_cols,
-            "features": feat_cols,
+            "features_selected": feat_cols_sel,
             "labels": label_cols,
+        },
+        "feature_selection": {
+            "preset": preset,
+            "features_list_provided": features_list if features_list else None,
         },
         "split": {
             "ratios": {"train": ratios[0], "val": ratios[1], "test": ratios[2]},
@@ -235,23 +261,44 @@ def preparar(par: str, tf_s: int, ratios: Tuple[float,float,float]) -> Dict[str,
 # CLI
 # ---------------------------------------
 def _print_uso():
-    print("Uso: python scripts/prepare_dataset.py PAR TIMEFRAME [TRAIN VAL TEST]", flush=True)
-    print("Ex.: python scripts/prepare_dataset.py EURJPY m5", flush=True)
-    print("     python scripts/prepare_dataset.py EURUSD 300 0.7 0.2 0.1", flush=True)
+    print("Uso: python scripts/preparar_dados.py PAR TIMEFRAME [--train-val-test 0.7 0.15 0.15] [--preset baseline_basic|all|custom] [--features col1,col2,...] [--config cfg.yaml]", flush=True)
+    print("Ex.: python scripts/preparar_dados.py EURJPY m5", flush=True)
+    print("     python scripts/preparar_dados.py EURJPY m5 --preset all", flush=True)
+    print("     python scripts/preparar_dados.py EURJPY m5 --preset custom --features abertura,fechamento,volume", flush=True)
+    print("     python scripts/preparar_dados.py EURJPY m5 --config src/config/eurjpy_m5.yaml", flush=True)
+
+def _load_yaml(path: str) -> dict:
+    if not yaml:
+        raise RuntimeError("yaml não disponível (pip install pyyaml) mas --config foi passado.")
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3 or sys.argv[1] in ("-h","--help"):
-        _print_uso()
-        sys.exit(1)
+    ap = argparse.ArgumentParser(prog="preparar_dados.py")
+    ap.add_argument("par", type=str, help="Símbolo (ex.: EURJPY)")
+    ap.add_argument("timeframe", type=str, help="Timeframe (ex.: m5 ou 300)")
+    ap.add_argument("--train-val-test", nargs=3, type=float, metavar=("TRAIN","VAL","TEST"),
+                    help="Ratios 3 valores que somam 1.0 (default 0.7 0.15 0.15)")
+    ap.add_argument("--preset", type=str, default=None,
+                    help="Preset de features: baseline_basic | all | custom (padrão: do YAML ou baseline_basic)")
+    ap.add_argument("--features", type=str, default=None,
+                    help="Lista CSV de colunas quando --preset custom, ex: abertura,fechamento,volume")
+    ap.add_argument("--config", type=str, default=None,
+                    help="Caminho opcional para um YAML de configuração (se fornecido pode definir feature_preset e features_list)")
+    args = ap.parse_args()
 
-    par = sys.argv[1].upper()
-    tf_val = sys.argv[2]
+    par = args.par.upper()
+    try:
+        tf_s = parse_timeframe(args.timeframe)
+    except Exception as e:
+        print(f"[ERRO] TIMEFRAME inválido: {e}", flush=True)
+        _print_uso()
+        sys.exit(2)
+
     ratios = (0.70, 0.15, 0.15)
-    if len(sys.argv) >= 6:
+    if args.train_val_test:
         try:
-            r_train = float(sys.argv[3])
-            r_val   = float(sys.argv[4])
-            r_test  = float(sys.argv[5])
+            r_train, r_val, r_test = args.train_val_test
             s = r_train + r_val + r_test
             if abs(s - 1.0) > 1e-9:
                 raise ValueError("Ratios devem somar 1.0")
@@ -261,15 +308,21 @@ if __name__ == "__main__":
             _print_uso()
             sys.exit(2)
 
-    try:
-        tf_s = parse_timeframe(tf_val)
-    except Exception as e:
-        print(f"[ERRO] {e}", flush=True)
-        _print_uso()
-        sys.exit(2)
+    preset = args.preset if args.preset else "yaml_default"
+    features_list = None
+    if args.features:
+        features_list = [c.strip() for c in args.features.split(",") if c.strip()]
+
+    cfg = None
+    if args.config:
+        try:
+            cfg = _load_yaml(args.config)
+        except Exception as e:
+            print(f"[ERRO] Falha ao ler config YAML: {e}", flush=True)
+            sys.exit(2)
 
     try:
-        preparar(par, tf_s, ratios)
+        preparar(par, tf_s, ratios, preset=preset, features_list=features_list, config_from_yaml=cfg)
         sys.exit(0)
     except Exception as e:
         print(f"[ERRO] Execução interrompida: {e}", flush=True)

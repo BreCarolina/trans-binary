@@ -1,0 +1,41 @@
+data:
+  tf: M5
+  features_csv_prefix: EURJPY_M5
+  X_train: data/processed/EURJPY_M5_X_train.csv
+  y_train: data/processed/EURJPY_M5_y_train.csv
+  X_val: data/processed/EURJPY_M5_X_val.csv
+  y_val: data/processed/EURJPY_M5_y_val.csv
+  X_test: data/processed/EURJPY_M5_X_test.csv
+  y_test: data/processed/EURJPY_M5_y_test.csv
+  manifest: data/manifests/EURJPY_M5_manifest.json
+sequence:
+  seq_len: 64
+  horizon: 1
+  target: direction
+  target_map:
+    class3:
+    - y_up
+    - y_down
+    - y_noop
+model:
+  d_model: 128
+  nhead: 8
+  num_layers: 4
+  dim_feedforward: 256
+  dropout: 0.1
+  activation: gelu
+train:
+  batch_size: 256
+  lr: 0.00015
+  weight_decay: 0.0001
+  max_epochs: 5
+  grad_clip: 1.0
+  seed: 42
+  device: auto
+paths:
+  checkpoints_dir: models/transformer
+  logs_dir: logs/training
+  outputs_dir: reports/summaries
+runtime:
+  num_workers: 2
+  pin_memory: false
