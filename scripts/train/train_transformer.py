@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-Script de treinamento do Transformer (Fase-3).
+Script de treinamento do Transformer (Fase-3) - versão com suporte a presets
 Uso:
   python scripts/train/train_transformer.py --config src/config/models/transformer_baseline.yaml
 """
-
 import os
 import argparse
 import json
@@ -33,7 +32,10 @@ def device_of(cfg):
     return torch.device(dev)
 
 def load_numpy(path):
-    if not Path(path).exists():
+    if path is None:
+        return None
+    p = Path(path)
+    if not p.exists():
         return None
     return np.load(path)
 
@@ -97,6 +99,38 @@ def eval_epoch(model, loader, loss_fn, device):
         return None, None
     return total_loss / n, correct / n
 
+def infer_dataset_shape(path: str):
+    """
+    Return (seq_len, n_features) inferred from given numpy file.
+    Uses memmap mode to avoid loading entire dataset in RAM.
+    """
+    if path is None:
+        raise RuntimeError("Path para inferência é None")
+    p = Path(path)
+    if not p.exists():
+        raise RuntimeError(f"Arquivo para inferência não encontrado: {path}")
+    arr = np.load(path, mmap_mode='r')
+    if arr.ndim != 3:
+        raise RuntimeError(f"Formato inválido em {path}. Esperado (N, seq_len, n_features), encontrado {arr.shape}")
+    return int(arr.shape[1]), int(arr.shape[2])
+
+def apply_preset_to_paths(cfg: Dict):
+    """
+    If cfg contains 'preset' and 'feature_presets', override cfg['paths'] accordingly.
+    """
+    preset = cfg.get("preset")
+    presets = cfg.get("feature_presets")
+    if preset and isinstance(presets, dict):
+        if preset not in presets:
+            raise KeyError(f"Preset '{preset}' não encontrado em cfg['feature_presets']")
+        # override paths
+        selected = presets[preset]
+        if not isinstance(selected, dict):
+            raise RuntimeError(f"Preset '{preset}' inválido (esperado mapping de paths)")
+        cfg.setdefault("paths", {})
+        for k, v in selected.items():
+            cfg["paths"][k] = v
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="path to yaml config")
@@ -113,7 +147,20 @@ def main():
     save_every = int(cfg.get("save_every_n_epochs", 1))
     max_ckpts = int(cfg.get("max_checkpoints", 10))
 
-    # dataloaders
+    # SUPPORT PRESET: override paths if preset present
+    apply_preset_to_paths(cfg)
+
+    # infer seq_len and n_features from train_X before building model
+    train_X_path = cfg.get("paths", {}).get("train_X")
+    if not train_X_path or not Path(train_X_path).exists():
+        raise RuntimeError(f"Arquivo de treino não encontrado: {train_X_path}")
+
+    inferred_seq_len, inferred_n_features = infer_dataset_shape(train_X_path)
+    # Update cfg with inferred values (override YAML if present)
+    cfg["seq_len"] = inferred_seq_len
+    cfg["n_features"] = inferred_n_features
+
+    # dataloaders (create after inference so shapes are known)
     train_loader = make_dataloader(
         cfg["paths"]["train_X"], cfg["paths"]["train_y"], batch_size, shuffle=True
     )
@@ -124,7 +171,7 @@ def main():
     if train_loader is None:
         raise RuntimeError("Dados de treino não encontrados. Atualize paths no YAML e gere os .npy de treino.")
 
-    # build model
+    # build model with inferred dims
     model = build_model_from_config(cfg)
     model = model.to(device)
 
