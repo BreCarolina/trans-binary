@@ -1,0 +1,69 @@
+{
+  "par": "EURJPY",
+  "timeframe_s": 300,
+  "tfmin": "M5",
+  "created_from": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/EURJPY_M5_full_36286x.csv",
+  "n_rows_source": 36286,
+  "feature_preset": "baseline",
+  "features_used": [
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos"
+  ],
+  "label_target": "y_up",
+  "split_ratios": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "index_ranges": {
+    "train": [
+      0,
+      25400
+    ],
+    "val": [
+      25400,
+      30843
+    ],
+    "test": [
+      30843,
+      36286
+    ]
+  },
+  "seq_len": 60,
+  "n_features": 4,
+  "scaler": {
+    "mean": {
+      "hour_sin": -0.12168237620242578,
+      "hour_cos": -0.5443203482988244,
+      "dow_sin": 0.33829133274264905,
+      "dow_cos": -0.10544111499888323
+    },
+    "std": {
+      "hour_sin": 0.6916540689148826,
+      "hour_cos": 0.459064166007912,
+      "dow_sin": 0.5203461835471161,
+      "dow_cos": 0.7771459344187519
+    }
+  },
+  "csv_artifacts": {
+    "X_train": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_X_train.csv",
+    "y_train": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_y_train.csv",
+    "X_val": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_X_val.csv",
+    "y_val": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_y_val.csv",
+    "X_test": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_X_test.csv",
+    "y_test": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_y_test.csv",
+    "manifest": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/manifests/EURJPY_M5_baseline_manifest.json",
+    "source": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/EURJPY_M5_full_36286x.csv"
+  },
+  "npy_artifacts": {
+    "X_train_npy": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_X_train.npy",
+    "y_train_npy": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_y_train.npy",
+    "X_val_npy": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_X_val.npy",
+    "y_val_npy": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_y_val.npy",
+    "X_test_npy": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_X_test.npy",
+    "y_test_npy": "/Users/carolbrescowitt/Desktop/Projetos/trans-binary/data/processed/baseline/EURJPY_M5_baseline_y_test.npy"
+  },
+  "created_at": "2025-11-22T22:00:37.435789+00:00"
+}
