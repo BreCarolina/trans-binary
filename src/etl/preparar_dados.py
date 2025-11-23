@@ -12,6 +12,11 @@ preparar_dados.py — Fase 2 (Normalização, Splits Temporais e Sequências)
 """
 from __future__ import annotations
 
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[2]
+PROCESSED_BASE = ROOT / 'data' / 'processed'
+PROCESSED_BASE.mkdir(parents=True, exist_ok=True)
+
 import os
 import sys
 import json
@@ -33,7 +38,7 @@ except Exception:
 PROJECT_ROOT = Path(__file__).resolve().parents[2]  # repo root
 SRC_DIR = PROJECT_ROOT / "src"
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
-PROC_DIR = PROJECT_ROOT / "data" / "processed"
+PROC_DIR = PROCESSED_BASE
 MANI_DIR = PROJECT_ROOT / "data" / "manifests"
 PROC_DIR.mkdir(parents=True, exist_ok=True)
 MANI_DIR.mkdir(parents=True, exist_ok=True)
@@ -287,6 +292,47 @@ def preparar(par: str,
         "X_test_npy":  str(preset_dir / f"{prefix}_{preset_name}_X_test.npy"),
         "y_test_npy":  str(preset_dir / f"{prefix}_{preset_name}_y_test.npy"),
     }
+
+
+    # --- Forçar saída para data/processed/baseline_basic (padronizado) ---
+
+    BASELINE_BASIC_DIR = PROCESSED_BASE / 'baseline_basic'
+
+    BASELINE_BASIC_DIR.mkdir(parents=True, exist_ok=True)
+
+    out_csv = {
+
+        'X_train_csv': str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_X_train.csv"),
+
+        'y_train_csv': str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_y_train.csv"),
+
+        'X_val_csv':   str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_X_val.csv"),
+
+        'y_val_csv':   str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_y_val.csv"),
+
+        'X_test_csv':  str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_X_test.csv"),
+
+        'y_test_csv':  str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_y_test.csv"),
+
+    }
+
+
+    out_npy = {
+
+        'X_train_npy': str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_X_train.npy"),
+
+        'y_train_npy': str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_y_train.npy"),
+
+        'X_val_npy':   str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_X_val.npy"),
+
+        'y_val_npy':   str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_y_val.npy"),
+
+        'X_test_npy':  str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_X_test.npy"),
+
+        'y_test_npy':  str(BASELINE_BASIC_DIR / f"{par}_{tfmin_str(tf_s)}_baseline_basic_y_test.npy"),
+
+    }
+
 
     np.save(out_npy["X_train_npy"], X_train_seq)
     np.save(out_npy["y_train_npy"], y_train_seq)

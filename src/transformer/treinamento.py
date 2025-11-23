@@ -24,7 +24,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
 # Import model builder (ajuste conforme layout src/transformer/model.py)
-from src.transformer.model import build_model_from_config
+from src.transformer.arquitetura import build_model_from_config
 
 
 # -------------------- utilidades --------------------
