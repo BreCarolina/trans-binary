@@ -209,3 +209,11 @@ data/raw/*.csv
 data/processed/*.csv
 reports/summaries/*.md
 .DS_Store
+# artifacts
+models/
+data/processed/
+data/raw/
+*.npy
+*.pth
+*.joblib
+*.jsonl
