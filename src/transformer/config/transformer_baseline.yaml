@@ -1,0 +1,40 @@
+preset: baseline_basic
+feature_presets:
+  baseline_basic:
+    train_X: data/processed/baseline_basic/EURJPY_M5_baseline_basic_X_train.npy
+    train_y: data/processed/baseline_basic/EURJPY_M5_baseline_basic_y_train.npy
+    val_X: data/processed/baseline_basic/EURJPY_M5_baseline_basic_X_val.npy
+    val_y: data/processed/baseline_basic/EURJPY_M5_baseline_basic_y_val.npy
+    test_X: data/processed/baseline_basic/EURJPY_M5_baseline_basic_X_test.npy
+    test_y: data/processed/baseline_basic/EURJPY_M5_baseline_basic_y_test.npy
+
+seq_len: 36
+n_features: 36
+
+d_model: 96
+n_heads: 4
+num_layers: 2
+dim_feedforward: 192
+dropout: 0.1
+pooling: mean
+n_classes: 2
+
+batch_size: 128
+epochs: 30
+learning_rate: 5e-4
+weight_decay: 1e-6
+device: auto
+
+scheduler:
+  type: ReduceLROnPlateau
+  mode: min
+  factor: 0.5
+  patience: 3
+  min_lr: 1e-7
+
+paths:
+  checkpoints_dir: models/transformer/checkpoints
+  log_json: logs/training/train_transformer_log.json
+
+save_every_n_epochs: 1
+max_checkpoints: 10
